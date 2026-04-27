@@ -3,361 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فاحص تعارض الجداول</title>
+    <title>فاحص تعارض الجداول المطور</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* تصميم يحاكي الصورة المرفقة - Dark & Neon */
         :root {
-            --bg-color: #0b1120; /* لون الخلفية الداكن جداً */
-            --box-bg: rgba(255, 255, 255, 0.03); /* لون خلفية الصناديق */
-            --border-color: #272c3e; /* لون الحدود */
-            --primary-neon: #a855f7; /* لون النيون الأرجواني */
+            --bg-color: #0b1120;
+            --box-bg: rgba(255, 255, 255, 0.03);
+            --border-color: #272c3e;
+            --primary-neon: #a855f7;
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
-            --warning: #fbbf24;
-            --error: #ef4444;
             --success: #10b981;
+            --error: #ef4444;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* تنسيق العنوان الرئيسي */
-        h1 {
-            color: var(--primary-neon);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-            font-size: 32px;
-            margin-bottom: 40px;
-        }
-
-        /* تنسيق الأزرار العلوية الزخرفية */
-        .top-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .decorative-btn {
-            background-color: #1e1b4b;
-            border: 1px solid #4338ca;
-            color: var(--text-main);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: default;
-        }
-
-        /* شريط الخصوصية الأخضر */
-        .privacy-bar {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 10px 30px;
-            border-radius: 8px;
-            margin-bottom: 40px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* تنسيق حاوية صناديق الرفع */
-        .upload-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            width: 100%;
-            max-width: 1000px;
-            margin-bottom: 40px;
-        }
-
-        /* تصميم صندوق الرفع */
+        .container { width: 100%; max-width: 1000px; }
+        h1 { color: var(--primary-neon); text-align: center; margin-bottom: 30px; }
+        
+        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         .upload-box {
             background-color: var(--box-bg);
             border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
+            border-radius: 12px; padding: 30px; text-align: center;
+            position: relative; transition: 0.3s;
         }
-
-        .upload-box:hover {
-            border-color: var(--primary-neon);
-            background-color: rgba(168, 85, 247, 0.05);
-        }
-
-        /* تصميم الأيقونة الأرجوانية */
+        .upload-box:hover { border-color: var(--primary-neon); }
         .icon-circle {
-            background-color: #2e1065;
-            color: var(--primary-neon);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin: 0 auto 20px auto;
-            border: 1px solid var(--primary-neon);
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+            background-color: #2e1065; color: var(--primary-neon);
+            width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px auto; border: 1px solid var(--primary-neon);
         }
-
-        .file-title {
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .file-desc {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .file-action {
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-
-        /* تنسيق مدخل الملف المخفي */
-        .file-input {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* زر "ابدأ الفحص" */
+        
+        .file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        
         #checkBtn {
             background: linear-gradient(135deg, #7e22ce, #a855f7);
-            color: white;
-            border: none;
-            padding: 15px 50px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+            color: white; border: none; padding: 15px 50px;
+            border-radius: 8px; font-size: 18px; width: 100%; cursor: pointer;
         }
 
-        #checkBtn:hover {
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
-            transform: translateY(-2px);
-        }
-
-        #checkBtn:disabled {
-            background: #4b5563;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* تنسيق قسم النتائج */
-        #resultsArea {
-            width: 100%;
-            max-width: 1000px;
-            margin-top: 40px;
-            background-color: var(--box-bg);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: none; /* مخفي في البداية */
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            text-align: right;
-        }
-
-        th {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--primary-neon);
-        }
-
-        /* تنسيق صفوف التعارض */
-        .conflict-row {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-            font-weight: bold;
-        }
-        
-        .safe-tag {
-            background-color: var(--success);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .conflict-tag {
-            background-color: var(--error);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
+        #resultsArea { width: 100%; margin-top: 30px; background: var(--box-bg); padding: 20px; border-radius: 12px; display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: center; }
+        th { background: rgba(255, 255, 255, 0.05); color: var(--primary-neon); }
+        .conflict-row { background-color: rgba(239, 68, 68, 0.15); color: #ff8a8a; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .bg-success { background: var(--success); color: white; }
+        .bg-error { background: var(--error); color: white; }
     </style>
 </head>
 <body>
 
-    <h1>فاحص تعارض الجداول</h1>
-
-    <div class="top-buttons">
-        <div class="decorative-btn">⚖️ موازنة الجداول</div>
-        <div class="decorative-btn">📅 تغيير المواعيد</div>
-        <div class="decorative-btn">🔍 بحث متقدم</div>
-    </div>
-
-    <div class="privacy-bar">
-        🔒 جميع البيانات تُعالج وتحفظ على جهازك ولا يتم رفع أي بيانات على السحابة
-    </div>
+<div class="container">
+    <h1>📊 فاحص تعارض الجداول</h1>
 
     <div class="upload-grid">
-        
         <div class="upload-box" id="boxSS01">
             <div class="icon-circle">📅</div>
-            <div class="file-title">جدول الوحدة التدريبي طولي</div>
-            <div class="file-desc">(يحتوي على الأيام والأوقات الدراسية)</div>
-            <div class="file-action">اسحب وأفلت الملف هنا أو انقر للاختيار</div>
-            <span id="fileNameSS01" class="file-desc"></span>
+            <div>جدول الوحدة (المواد المسجلة)</div>
+            <small id="nameSS01" style="color: var(--success)"></small>
             <input type="file" id="inputSS01" class="file-input" accept=".xlsx, .xls">
         </div>
 
         <div class="upload-box" id="boxSF01">
             <div class="icon-circle">📄</div>
-            <div class="file-title">جدول الاختبارات العام Excel</div>
-            <div class="file-desc">(يحتوي على مواعيد الاختبارات)</div>
-            <div class="file-action">اسحب وأفلت الملف هنا أو انقر للاختيار</div>
-            <span id="fileNameSF01" class="file-desc"></span>
+            <div>جدول الاختبارات العام</div>
+            <small id="nameSF01" style="color: var(--success)"></small>
             <input type="file" id="inputSF01" class="file-input" accept=".xlsx, .xls">
         </div>
-
     </div>
 
-    <button id="checkBtn">ابدأ الفحص</button>
+    <button id="checkBtn">بدأ الفحص والمقارنة</button>
 
     <div id="resultsArea">
-        <h2>📊 نتائج الفحص والتعارضات:</h2>
-        <div id="resultsContent"></div>
+        <h2 style="text-align: center;">📋 نتائج التداخل</h2>
+        <div id="resultsTable"></div>
     </div>
+</div>
 
-    <script>
-        // دالة مساعدة لقراءة ملف إكسيل
-        async function parseExcelFile(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    resolve(XLSX.utils.sheet_to_json(worksheet, {raw: false})); // تحويل النصوص كما هي
-                };
-                reader.readAsArrayBuffer(file);
-            });
+<script>
+    // دالة ذكية للبحث عن القيمة بناءً على مسميات محتملة للعمود
+    function getValue(row, possibleNames) {
+        for (let name of possibleNames) {
+            if (row[name] !== undefined) return row[name];
         }
+        return "غير محدد";
+    }
 
-        // تحديث اسم الملف المرفوع على الواجهة
-        document.getElementById('inputSS01').addEventListener('change', (e) => {
-            document.getElementById('fileNameSS01').textContent = e.target.files[0].name;
-            document.getElementById('boxSS01').style.borderColor = 'var(--success)';
+    async function parseExcel(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                resolve(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+            };
+            reader.readAsArrayBuffer(file);
         });
-        document.getElementById('inputSF01').addEventListener('change', (e) => {
-            document.getElementById('fileNameSF01').textContent = e.target.files[0].name;
-            document.getElementById('boxSF01').style.borderColor = 'var(--success)';
-        });
+    }
 
-        // تنفيذ عملية الفحص عند الضغط على الزر
-        document.getElementById('checkBtn').addEventListener('click', async () => {
-            const ss01File = document.getElementById('inputSS01').files[0];
-            const sf01File = document.getElementById('inputSF01').files[0];
-            const btn = document.getElementById('checkBtn');
-            const resultsArea = document.getElementById('resultsArea');
-            const resultsContent = document.getElementById('resultsContent');
+    document.getElementById('inputSS01').onchange = (e) => document.getElementById('nameSS01').innerText = e.target.files[0].name;
+    document.getElementById('inputSF01').onchange = (e) => document.getElementById('nameSF01').innerText = e.target.files[0].name;
 
-            if (!ss01File || !sf01File) {
-                alert("يرجى رفع ملف جدول الوحدة وملف جدول الاختبارات معاً.");
-                return;
-            }
+    document.getElementById('checkBtn').onclick = async () => {
+        const file1 = document.getElementById('inputSS01').files[0];
+        const file2 = document.getElementById('inputSF01').files[0];
 
-            btn.textContent = "جاري التحليل...";
-            btn.disabled = true;
+        if (!file1 || !file2) return alert("يرجى اختيار الملفين");
 
-            try {
-                const ss01Data = await parseExcelFile(ss01File);
-                const sf01Data = await parseExcelFile(sf01File);
+        const dataSS01 = await parseExcel(file1);
+        const dataSF01 = await parseExcel(file2);
 
-                // --- منطق كشف التعارض ---
+        // مسميات الأعمدة المحتملة
+        const colID = ['رمز المادة', 'الرمز', 'كود المادة', 'Course Code', 'رمز المقرر'];
+        const colName = ['اسم المادة', 'المادة', 'Course Name', 'اسم المقرر'];
+        const colDay = ['اليوم', 'يوم', 'Day'];
+        const colTime = ['الوقت', 'وقت', 'الفترة', 'Time'];
 
-                // 1. استخراج رموز المواد المشتركة
-                // ملاحظة: يجب أن تحتوي الملفات على رؤوس أعمدة واضحة
-                const ss01Courses = new Set(ss01Data.map(r => r['رمز المادة']));
-                const sf01Courses = sf01Data.filter(r => ss01Courses.has(r['رمز المادة']));
+        let html = `<table><thead><tr>
+            <th>الرمز</th><th>المادة</th><th>موعد الدراسة</th><th>موعد الاختبار</th><th>الحالة</th>
+        </tr></thead><tbody>`;
 
-                let conflictsHtml = "<table><thead><tr><th>رمز المادة</th><th>اسم المادة</th><th>موعد الدراسة (SS01)</th><th>موعد الاختبار (SF01)</th><th>الحالة</th></tr></thead><tbody>";
-                let hasAnyConflict = false;
+        // استخراج مواد الطالب
+        const myCourseCodes = dataSS01.map(r => String(getValue(r, colID)).trim());
 
-                // 2. مقارنة المواعيد
-                sf01Courses.forEach(exam => {
-                    // البحث عن نفس المادة في جدول الوحدة
-                    const ssClass = ss01Data.find(r => r['رمز المادة'] === exam['رمز المادة']);
-                    
-                    if (ssClass) {
-                        // شرط التعارض البسيط: نفس اليوم ونفس الوقت
-                        // ملاحظة: قد تحتاج لتعديل مسميات الأعمدة هنا لتناسب ملفاتك (مثل "يوم الاختبار", "وقت الاختبار")
-                        const isDayConflict = (exam['يوم'] === ssClass['يوم']);
-                        const isTimeConflict = (exam['وقت'] === ssClass['وقت']);
+        dataSF01.forEach(examRow => {
+            const examCode = String(getValue(examRow, colID)).trim();
+            
+            // إذا كانت المادة موجودة في جدول الطالب
+            if (myCourseCodes.includes(examCode)) {
+                const studentRow = dataSS01.find(r => String(getValue(r, colID)).trim() === examCode);
+                
+                const sDay = getValue(studentRow, colDay);
+                const sTime = getValue(studentRow, colTime);
+                const eDay = getValue(examRow, colDay);
+                const eTime = getValue(examRow, colTime);
 
-                        let isConflict = false;
-                        if (isDayConflict && isTimeConflict) {
-                            isConflict = true;
-                            hasAnyConflict = true;
-                        }
+                const isConflict = (sDay === eDay && sTime === eTime);
 
-                        conflictsHtml += `<tr class="${isConflict ? 'conflict-row' : ''}">
-                            <td>${exam['رمز المادة']}</td>
-                            <td>${exam['اسم المادة'] || ''}</td>
-                            <td>${ssClass['يوم']} / ${ssClass['وقت']}</td>
-                            <td>${exam['يوم']} / ${exam['وقت']}</td>
-                            <td>
-                                ${isConflict ? '<span class="conflict-tag">⚠️ تعارض!</span>' : '<span class="safe-tag">✅ سليم</span>'}
-                            </td>
-                        </tr>`;
-                    }
-                });
-
-                conflictsHtml += "</tbody></table>";
-
-                resultsContent.innerHTML = conflictsHtml;
-                resultsArea.style.display = 'block';
-
-            } catch (error) {
-                alert("حدث خطأ أثناء قراءة الملفات. تأكد من تنسيق Excel.");
-                console.error(error);
-            } finally {
-                btn.textContent = "ابدأ الفحص";
-                btn.disabled = false;
+                html += `<tr class="${isConflict ? 'conflict-row' : ''}">
+                    <td>${examCode}</td>
+                    <td>${getValue(examRow, colName)}</td>
+                    <td>${sDay} / ${sTime}</td>
+                    <td>${eDay} / ${eTime}</td>
+                    <td>
+                        <span class="status-badge ${isConflict ? 'bg-error' : 'bg-success'}">
+                            ${isConflict ? '⚠️ تعارض' : '✅ سليم'}
+                        </span>
+                    </td>
+                </tr>`;
             }
         });
-    </script>
+
+        html += "</tbody></table>";
+        document.getElementById('resultsTable').innerHTML = html;
+        document.getElementById('resultsArea').style.display = 'block';
+    };
+</script>
 </body>
 </html>
